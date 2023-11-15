@@ -1,56 +1,52 @@
 package main
 
 import (
-	"crypto/rand"
-	"encoding/csv"
+	"assignment/bubbleSort"
+	"assignment/numberGenerator"
+	"assignment/quickSort"
+	"fmt"
 	"log"
-	"math/big"
-	"os"
-	"strconv"
+	"time"
 )
 
 func main() {
-	file, err := os.Create("in.csv")
-	if err != nil {
-		log.Fatal("Cannot create file", err)
-	}
-	defer file.Close()
+	numberGenerator.CreateFile(-9999, 9999, 100)
 
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
+	// starting timer
+	startTime := time.Now()
 
-	for i := 0; i < 10000; i++ {
-		// Generate a random number between -9999 and 9999
-		randomNumber, err := randomInt(-9999, 9999)
-		if err != nil {
-			log.Fatal("Failed to generate random number", err)
-		}
+	sortingAlgorithm("bubble", "in.csv")
 
-		// Convert the number to string and write it to CSV
-		err = writer.Write([]string{strconv.Itoa(randomNumber)})
-		if err != nil {
-			log.Fatal("Cannot write to file", err)
-		}
-	}
+	// ending timer
+	endTime := time.Since(startTime)
+	fmt.Println("Time taken to sort:", endTime)
 
-	log.Println("Numbers generated.")
 }
 
-// generating random numbers between a range
-func randomInt(min, max int) (int, error) {
-	// Generate a cryptographically secure random number
-	bigInt, err := randInt(big.NewInt(int64(max - min + 1)))
-	if err != nil {
-		return 0, err
-	}
-	return int(bigInt.Int64()) + min, nil
-}
+func sortingAlgorithm(algorithm string, fileName string) []int {
 
-// generating random numbers between 0 and n-1
-func randInt(n *big.Int) (*big.Int, error) {
-	randomValue, err := rand.Int(rand.Reader, n)
+	// Read the CSV file
+	nums, err := numberGenerator.ReadFile(fileName)
 	if err != nil {
-		return nil, err
+		log.Fatal("error reading file:", err)
 	}
-	return randomValue, nil
+
+	var sortedNums []int
+	if algorithm == "bubble" {
+		fmt.Println("sorting algorithm used: bubble sort")
+		sortedNums = bubbleSort.BubbleSort(nums)
+	} else if algorithm == "quick" {
+		fmt.Println("sorting algorithm used: quick sort")
+		sortedNums = quickSort.QuickSort(nums)
+	} else {
+		log.Fatal("did you spell it right?")
+	}
+
+	// Write the sorted numbers back to out.csv
+	if err := numberGenerator.WriteFile("out.csv", sortedNums); err != nil {
+		log.Fatal("error writing to file:", err)
+	}
+
+	fmt.Println("Numbers sorted.")
+	return sortedNums
 }

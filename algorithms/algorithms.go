@@ -7,7 +7,7 @@ import (
 )
 
 // ye olde mergesort with concurrency
-func ConcurrentMergeSort(arr []int) []int {
+func ConcurrentMergeSort(nums []int) []int {
 	// found out that using a power of two for the number of threads
 	// is good for workload distribution for your CPU cores
 	// because mergesort splits arrays in half over and over,
@@ -15,7 +15,7 @@ func ConcurrentMergeSort(arr []int) []int {
 	threads := previousPowerOfTwo(runtime.NumCPU())
 	// segmentation of the array, based on the array length
 	//and number of threads
-	segmentSize := (len(arr) + threads - 1) / threads
+	segmentSize := (len(nums) + threads - 1) / threads
 
 	// baby's first channel. the buffer size is the thread
 	ch := make(chan []int, threads)
@@ -26,14 +26,14 @@ func ConcurrentMergeSort(arr []int) []int {
 	for i := 0; i < threads; i++ {
 		start := i * segmentSize
 		end := (i + 1) * segmentSize
-		if end > len(arr) { // last segment for elements that don't fit.
-			end = len(arr) // this is to avoid out of bounds errors
+		if end > len(nums) { // last segment for elements that don't fit.
+			end = len(nums) // this is to avoid out of bounds errors
 		}
 
 		wg.Add(1)                 // wait group counter, to track the goroutines
 		go func(start, end int) { // groutine for the segments
 			defer wg.Done()
-			part := arr[start:end]
+			part := nums[start:end]
 			sort.Ints(part) // actual sorting here
 			ch <- part      // sorted is sent to the channel, it'll be collected later
 		}(start, end)
@@ -53,21 +53,21 @@ func ConcurrentMergeSort(arr []int) []int {
 }
 
 // bucket sort, make it concurrent
-func ConcurrentBucketSort(array []int, numCores int) []int {
+func ConcurrentBucketSort(nums []int, numCores int) []int {
 
 	// splitting array
-	half := len(array) / 2
+	half := len(nums) / 2
 	ch := make(chan []int, 2) // channel for the two halves
 
 	go func() {
 		// sorting first half
-		sortedHalf := BucketSort(array[:half])
+		sortedHalf := BucketSort(nums[:half])
 		ch <- sortedHalf
 	}()
 
 	go func() {
 		// sorting second half
-		sortedHalf := BucketSort(array[half:])
+		sortedHalf := BucketSort(nums[half:])
 		ch <- sortedHalf
 	}()
 
